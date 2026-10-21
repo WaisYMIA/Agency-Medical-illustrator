@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Management — Medical Premium Illustrator</title>
+<style>
+  :root { --ink: #221a17; --line: #ddd3c6; --bg: #f5efe4; --red: #a6192e; --gold: #b8892b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+  .warning-bar { background: #3a0510; color: #ffd166; font-size: 12.5px; text-align: center; padding: 10px 16px; line-height: 1.5; }
+  .backend-url-bar { background: #fff; border-bottom: 1px solid var(--line); padding: 10px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .backend-url-bar label { font-size: 12px; font-weight: 600; margin: 0; white-space: nowrap; }
+  .backend-url-bar input { flex: 1; min-width: 240px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; font-family: inherit; }
+  .backend-url-status { font-size: 11.5px; color: #77655e; white-space: nowrap; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 20px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #77655e; margin: 0 0 20px; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; margin-bottom: 20px; }
+  label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+  input[type=password], input[type=text] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13.5px; font-family: inherit; }
+  .field { margin-bottom: 12px; max-width: 360px; }
+  button { font-family: inherit; cursor: pointer; }
+  button.btn { background: var(--red); color: #fff; border: none; padding: 9px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; }
+  button.btn.ghost { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  button.btn:disabled { background: #c9bcae; cursor: not-allowed; }
+  button.small { padding: 5px 10px; font-size: 12px; border-radius: 4px; border: 1px solid var(--line); background: #fff; }
+  button.danger { color: #b23b3b; border-color: #e0b4b4; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: left; vertical-align: top; }
+  th { font-size: 11.5px; letter-spacing: 0.6px; text-transform: uppercase; color: #77655e; }
+  tr:hover td { background: #fbf8f3; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  .muted { color: #77655e; font-size: 11.5px; }
+  .status { margin-top: 12px; font-size: 13px; padding: 10px 12px; border-radius: 4px; display: none; white-space: pre-line; }
+  .status.ok { background: #f1f6f4; color: #2f6b45; border: 1px solid #b8d3c8; display: block; }
+  .status.err { background: #fdf3e6; color: #8a5a1c; border: 1px solid #e3b976; display: block; }
+  .empty { padding: 24px; text-align: center; color: #77655e; font-size: 13px; }
+  .acceptances { background: #fbf8f3; font-size: 12px; }
+  .acceptances td { padding-left: 24px; }
+</style>
+</head>
+<body>
+<div class="warning-bar">
+  <strong>Internal admin tool — Phase 4.</strong>
+  Sign in with your admin account (or the legacy shared secret). Do not
+  expose this page publicly. See ROADMAP.md, Phase 4.
+</div>
+
+<div class="backend-url-bar">
+  <label for="backendUrlInput">Backend URL</label>
+  <input type="text" id="backendUrlInput" placeholder="Auto-detected — leave blank unless pointing at a different backend">
+  <span class="backend-url-status" id="backendUrlStatus"></span>
+</div>
+
+<div class="wrap">
+  <h1>Agent Management</h1>
+  <p class="sub">Every agent who has verified their phone number and accepted the Terms of Use. Revoking an agent stops their saved session working — they'd have to accept the Terms and re-verify to use the system again.</p>
+
+  <div class="panel">
+    <div id="adminAuthPanel" style="margin-bottom:16px"></div>
+    <button class="btn" id="loadBtn" type="button">Load Agents</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="panel">
+    <div id="agentsContainer">
+      <div class="empty">Enter the admin secret and click <strong>Load Agents</strong>.</div>
+    </div>
+  </div>
+</div>
+
+<script src="../frontend/config.js"></script>
+<script src="admin-session.js"></script>
+<script>
+// ---------------- Backend URL override (persisted, shared across admin tools) ----------------
+const BACKEND_URL_STORAGE_KEY = 'mpi_admin_backend_url';
+function getStoredBackendUrl() {
+  try { return localStorage.getItem(BACKEND_URL_STORAGE_KEY) || ''; } catch (e) { return ''; }
+}
+function setStoredBackendUrl(url) {
+  try { if (url) localStorage.setItem(BACKEND_URL_STORAGE_KEY, url); else localStorage.removeItem(BACKEND_URL_STORAGE_KEY); } catch (e) {}
+}
+let BACKEND_URL = getStoredBackendUrl() || API_BASE_URL;
+function updateBackendUrlStatus() {
+  document.getElementById('backendUrlStatus').textContent = 'Using: ' + (BACKEND_URL || '(same origin)');
+}
+function initBackendUrlField(onChangeReload) {
+  const input = document.getElementById('backendUrlInput');
+  input.value = getStoredBackendUrl();
+  input.placeholder = 'Auto-detected: ' + (API_BASE_URL || '(same origin)') + ' — leave blank to use it';
+  updateBackendUrlStatus();
+  input.addEventListener('input', () => {
+    const val = input.value.trim().replace(/\/+$/, '');
+    BACKEND_URL = val || API_BASE_URL;
+    setStoredBackendUrl(val);
+    updateBackendUrlStatus();
+  });
+  input.addEventListener('change', () => { if (onChangeReload) onChangeReload(); });
+}
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (attrs[k] === null || attrs[k] === undefined) continue;
+    if (k === 'class') e.className = attrs[k];
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), attrs[k]);
+    else e.setAttribute(k, attrs[k]);
+  }
+  (children || []).forEach(c => { if (c !== null && c !== undefined) e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c); });
+  return e;
+}
+
+function showStatus(kind, msg) {
+  const s = document.getElementById('status');
+  s.className = 'status ' + kind;
+  s.textContent = msg;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
+}
+
+function adminHeaders() {
+  return adminAuthHeaders();
+}
+
+async function loadAgents() {
+  const container = document.getElementById('agentsContainer');
+  try {
+    const res = await fetch(BACKEND_URL + '/api/agents', { headers: adminHeaders() });
+    const data = await res.json();
+    if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+    if (!res.ok) throw new Error(data.error || 'Could not load agents.');
+    renderAgents(data.agents || []);
+    showStatus('ok', `Loaded ${data.agents.length} agent(s).`);
+  } catch (e) {
+    container.innerHTML = '';
+    container.appendChild(el('div', { class: 'empty' }, ['Could not load agents.']));
+    showStatus('err', e.message);
+  }
+}
+
+function renderAgents(agents) {
+  const container = document.getElementById('agentsContainer');
+  container.innerHTML = '';
+
+  if (agents.length === 0) {
+    container.appendChild(el('div', { class: 'empty' }, ['No agents have verified yet.']));
+    return;
+  }
+
+  const table = el('table');
+  table.appendChild(el('tr', {}, [
+    el('th', {}, ['Agent']),
+    el('th', {}, ['Phone']),
+    el('th', {}, ['First Verified']),
+    el('th', {}, ['Last Active']),
+    el('th', {}, ['Terms Accepted']),
+    el('th', {}, ['']),
+  ]));
+
+  agents.forEach(a => {
+    const row = el('tr', {}, [
+      el('td', {}, [a.agentName || '(no name)']),
+      el('td', { class: 'mono' }, [a.phone]),
+      el('td', {}, [fmtDate(a.firstVerifiedAt)]),
+      el('td', {}, [fmtDate(a.lastActiveAt)]),
+      el('td', {}, [
+        el('div', {}, [String(a.acceptanceCount) + '×']),
+        el('div', { class: 'muted' }, [a.lastAcceptedAt ? fmtDate(a.lastAcceptedAt) : 'never']),
+      ]),
+      el('td', {}, [
+        el('button', { class: 'small', type: 'button', onclick: () => toggleAcceptances(a.phone, row) }, ['History']),
+        ' ',
+        el('button', { class: 'small danger', type: 'button', onclick: () => revokeAgent(a) }, ['Revoke']),
+      ]),
+    ]);
+    table.appendChild(row);
+  });
+
+  container.appendChild(table);
+}
+
+async function toggleAcceptances(phone, afterRow) {
+  // If an expanded history row is already showing for this agent, collapse it.
+  const existing = afterRow.nextElementSibling;
+  if (existing && existing.classList && existing.classList.contains('acceptances')) {
+    existing.remove();
+    return;
+  }
+  try {
+    const res = await fetch(BACKEND_URL + '/api/agent/acceptances?phone=' + encodeURIComponent(phone), { headers: adminHeaders() });
+    const data = await res.json();
+    if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+    if (!res.ok) throw new Error(data.error || 'Could not load acceptance history.');
+    const list = data.acceptances || [];
+    const cell = el('td', { colspan: '6' });
+    if (list.length === 0) {
+      cell.appendChild(el('div', { class: 'muted' }, ['No recorded acceptances.']));
+    } else {
+      list.forEach(item => {
+        cell.appendChild(el('div', {}, [
+          'Accepted terms ' + (item.termsVersion || '(unknown version)') + ' on ' + fmtDate(item.acceptedAt),
+          item.ip ? el('span', { class: 'muted' }, ['  ·  from ' + item.ip]) : null,
+        ]));
+      });
+    }
+    const historyRow = el('tr', { class: 'acceptances' }, [cell]);
+    afterRow.parentNode.insertBefore(historyRow, afterRow.nextElementSibling);
+  } catch (e) {
+    showStatus('err', e.message);
+  }
+}
+
+async function revokeAgent(agent) {
+  const confirmed = confirm(
+    'Revoke access for ' + (agent.agentName || agent.phone) + '?\n\n' +
+    'Their saved session will stop working and they will have to accept the Terms ' +
+    'and verify their phone number again to use the system.\n\n' +
+    'Their record of having accepted the Terms is kept — that audit trail is not deleted.'
+  );
+  if (!confirmed) return;
+  try {
+    const res = await fetch(BACKEND_URL + '/api/agents/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+      body: JSON.stringify({ phone: agent.phone }),
+    });
+    const data = await res.json();
+    if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+    if (!res.ok) throw new Error(data.error || 'Revoke failed.');
+    showStatus('ok', 'Revoked ' + (agent.agentName || agent.phone) + '.');
+    loadAgents();
+  } catch (e) {
+    showStatus('err', e.message);
+  }
+}
+
+document.getElementById('loadBtn').addEventListener('click', loadAgents);
+renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+initBackendUrlField();
+</script>
+</body>
+</html>

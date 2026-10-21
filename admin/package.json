@@ -1,0 +1,9 @@
+{
+  "name": "medical-premium-illustrator-admin-tools",
+  "version": "1.0.0",
+  "description": "Tests for the admin tools' pure-logic modules (range-extract.js, rate-import-core.js). The admin HTML pages themselves are not run here — this only covers the dependency-free logic they use.",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

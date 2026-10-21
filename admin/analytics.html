@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usage &amp; Activity — Medical Premium Illustrator</title>
+<style>
+  :root { --ink: #221a17; --line: #ddd3c6; --bg: #f5efe4; --red: #a6192e; --gold: #b8892b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+  .warning-bar { background: #3a0510; color: #ffd166; font-size: 12.5px; text-align: center; padding: 10px 16px; line-height: 1.5; }
+  .backend-url-bar { background: #fff; border-bottom: 1px solid var(--line); padding: 10px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .backend-url-bar label { font-size: 12px; font-weight: 600; margin: 0; white-space: nowrap; }
+  .backend-url-bar input { flex: 1; min-width: 240px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; font-family: inherit; }
+  .backend-url-status { font-size: 11.5px; color: #77655e; white-space: nowrap; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 20px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 12px; }
+  .sub { font-size: 13px; color: #77655e; margin: 0 0 20px; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; margin-bottom: 20px; }
+  .panel-title { font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13.5px; font-family: inherit; background: #fff; }
+  button { font-family: inherit; cursor: pointer; }
+  button.btn { background: var(--red); color: #fff; border: none; padding: 9px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; }
+  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .status { margin-top: 12px; font-size: 13px; padding: 10px 12px; border-radius: 4px; display: none; white-space: pre-line; }
+  .status.ok { background: #f1f6f4; color: #2f6b45; border: 1px solid #b8d3c8; display: block; }
+  .status.err { background: #fdf3e6; color: #8a5a1c; border: 1px solid #e3b976; display: block; }
+  .big { font-size: 38px; font-weight: 700; font-family: Georgia, serif; line-height: 1; }
+  .big-label { font-size: 12px; color: #77655e; margin-top: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { font-size: 11.5px; letter-spacing: 0.6px; text-transform: uppercase; color: #77655e; }
+  td.num, th.num { text-align: right; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  .muted { color: #77655e; font-size: 11.5px; }
+  .empty { padding: 18px; text-align: center; color: #77655e; font-size: 13px; }
+  .chart { display: flex; align-items: flex-end; gap: 3px; height: 140px; padding-top: 8px; border-bottom: 1px solid var(--line); }
+  .bar { flex: 1; background: var(--red); min-height: 2px; border-radius: 2px 2px 0 0; opacity: 0.85; }
+  .bar.zero { background: var(--line); }
+  .bar:hover { opacity: 1; }
+  .chart-axis { display: flex; justify-content: space-between; font-size: 11px; color: #77655e; margin-top: 4px; }
+  .pill { display: inline-block; font-size: 10.5px; padding: 1px 8px; border-radius: 999px; background: var(--bg); color: #77655e; }
+  .pill.warn { background: #fdf3e6; color: #8a5a1c; }
+  tr.failed td { background: #fdf8f0; }
+</style>
+</head>
+<body>
+<div class="warning-bar">
+  <strong>Internal admin tool — Phase 4.</strong>
+  Sign in with your admin account (or the legacy shared secret). Do not
+  expose this page publicly. Contains agent names and phone numbers.
+</div>
+
+<div class="backend-url-bar">
+  <label for="backendUrlInput">Backend URL</label>
+  <input type="text" id="backendUrlInput" placeholder="Auto-detected — leave blank unless pointing at a different backend">
+  <span class="backend-url-status" id="backendUrlStatus"></span>
+</div>
+
+<div class="wrap">
+  <h1>Usage &amp; Activity</h1>
+  <p class="sub">How the system is being used, and what admins have changed. Usage figures hold no client information — only the product, plan tier, which agent, and when.</p>
+
+  <div class="panel">
+    <div id="adminAuthPanel" style="margin-bottom:16px"></div>
+    <div class="controls">
+      <label for="daysSelect" style="font-size:12.5px; font-weight:600">Period</label>
+      <select id="daysSelect">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="365">Last 12 months</option>
+      </select>
+      <button class="btn" id="refreshBtn" type="button">Load / Refresh</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Illustrations generated</div>
+    <div id="summaryBlock"><div class="empty">Sign in, then click <strong>Load / Refresh</strong>.</div></div>
+  </div>
+
+  <div class="grid2" id="breakdownGrid" style="display:none">
+    <div class="panel"><div class="panel-title">By product</div><div id="byProduct"></div></div>
+    <div class="panel"><div class="panel-title">By plan tier</div><div id="byTier"></div></div>
+  </div>
+
+  <div class="panel" id="agentPanel" style="display:none">
+    <div class="panel-title">By agent</div>
+    <div id="byAgent"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Admin activity</div>
+    <p class="muted" style="margin:0 0 10px">Who changed what, newest first. Actions made with the legacy shared secret show as <span class="mono">legacy-secret</span> because there is no way to know which person it was.</p>
+    <div id="auditBlock"><div class="empty">Sign in, then click <strong>Load / Refresh</strong>.</div></div>
+  </div>
+</div>
+
+<script src="../frontend/config.js"></script>
+<script src="admin-session.js"></script>
+<script>
+// ---------------- Backend URL override (persisted, shared across admin tools) ----------------
+const BACKEND_URL_STORAGE_KEY = 'mpi_admin_backend_url';
+function getStoredBackendUrl() {
+  try { return localStorage.getItem(BACKEND_URL_STORAGE_KEY) || ''; } catch (e) { return ''; }
+}
+function setStoredBackendUrl(url) {
+  try { if (url) localStorage.setItem(BACKEND_URL_STORAGE_KEY, url); else localStorage.removeItem(BACKEND_URL_STORAGE_KEY); } catch (e) {}
+}
+let BACKEND_URL = getStoredBackendUrl() || API_BASE_URL;
+function updateBackendUrlStatus() {
+  document.getElementById('backendUrlStatus').textContent = 'Using: ' + (BACKEND_URL || '(same origin)');
+}
+function initBackendUrlField(onChangeReload) {
+  const input = document.getElementById('backendUrlInput');
+  input.value = getStoredBackendUrl();
+  input.placeholder = 'Auto-detected: ' + (API_BASE_URL || '(same origin)') + ' — leave blank to use it';
+  updateBackendUrlStatus();
+  input.addEventListener('input', () => {
+    const val = input.value.trim().replace(/\/+$/, '');
+    BACKEND_URL = val || API_BASE_URL;
+    setStoredBackendUrl(val);
+    updateBackendUrlStatus();
+  });
+  input.addEventListener('change', () => { if (onChangeReload) onChangeReload(); });
+}
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (attrs[k] === null || attrs[k] === undefined) continue;
+    if (k === 'class') e.className = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  (children || []).forEach(c => { if (c !== null && c !== undefined) e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c); });
+  return e;
+}
+function showStatus(kind, msg) {
+  const s = document.getElementById('status');
+  s.className = 'status ' + kind;
+  s.textContent = msg;
+}
+function clear(id) { const n = document.getElementById(id); n.innerHTML = ''; return n; }
+function fmtDateTime(iso) { try { return new Date(iso).toLocaleString(); } catch (e) { return iso || '—'; } }
+function fmtDayShort(day) {
+  try { return new Date(day + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { return day; }
+}
+
+const ACTION_LABELS = {
+  'branding.save': 'Changed branding',
+  'product.draft-save': 'Saved a product draft',
+  'product.publish': 'Published a product',
+  'agent.revoke': 'Revoked an agent',
+  'login.success': 'Signed in',
+  'login.failed': 'Failed sign-in attempt',
+  'logout': 'Signed out',
+};
+
+function simpleTable(headers, rows, numericCols) {
+  const table = el('table');
+  table.appendChild(el('tr', {}, headers.map((h, i) => el('th', { class: numericCols.includes(i) ? 'num' : '' }, [h]))));
+  rows.forEach(r => table.appendChild(el('tr', {}, r.map((c, i) => el('td', { class: numericCols.includes(i) ? 'num' : '' }, [c])))));
+  const wrap = el('div', { class: 'scroll' }, [table]);
+  return wrap;
+}
+
+function renderSummary(data) {
+  const block = clear('summaryBlock');
+  block.appendChild(el('div', {}, [
+    el('div', { class: 'big' }, [String(data.total)]),
+    el('div', { class: 'big-label' }, ['illustrations generated in the last ' + data.days + ' days (days are in East Africa Time). Each time an agent clicks Generate counts once.']),
+  ]));
+
+  const max = Math.max(1, ...data.byDay.map(d => d.count));
+  const chart = el('div', { class: 'chart', style: 'margin-top:18px' });
+  data.byDay.forEach(d => {
+    chart.appendChild(el('div', {
+      class: 'bar' + (d.count === 0 ? ' zero' : ''),
+      style: 'height:' + Math.max(2, Math.round((d.count / max) * 130)) + 'px',
+      title: fmtDayShort(d.day) + ': ' + d.count,
+    }));
+  });
+  block.appendChild(chart);
+  block.appendChild(el('div', { class: 'chart-axis' }, [
+    el('span', {}, [fmtDayShort(data.byDay[0].day)]),
+    el('span', {}, [fmtDayShort(data.byDay[data.byDay.length - 1].day)]),
+  ]));
+
+  document.getElementById('breakdownGrid').style.display = 'grid';
+  document.getElementById('agentPanel').style.display = 'block';
+
+  const byProduct = clear('byProduct');
+  byProduct.appendChild(data.byProduct.length
+    ? simpleTable(['Product', 'Illustrations'], data.byProduct.map(p => [p.product, String(p.count)]), [1])
+    : el('div', { class: 'empty' }, ['No illustrations in this period.']));
+
+  const byTier = clear('byTier');
+  byTier.appendChild(data.byTier.length
+    ? simpleTable(['Product', 'Tier', 'Illustrations'], data.byTier.map(t => [t.product, t.tier, String(t.count)]), [2])
+    : el('div', { class: 'empty' }, ['No illustrations in this period.']));
+
+  const byAgent = clear('byAgent');
+  byAgent.appendChild(data.byAgent.length
+    ? simpleTable(['Agent', 'Phone', 'Status', 'Illustrations'], data.byAgent.map(a => [
+        a.name,
+        el('span', { class: 'mono' }, [a.phone || '—']),
+        el('span', { class: 'pill' + (a.active ? '' : ' warn') }, [a.active ? 'Active' : 'Access removed']),
+        String(a.count),
+      ]), [3])
+    : el('div', { class: 'empty' }, ['No illustrations in this period.']));
+}
+
+function renderAudit(entries) {
+  const block = clear('auditBlock');
+  if (!entries.length) { block.appendChild(el('div', { class: 'empty' }, ['No admin activity recorded yet.'])); return; }
+  const table = el('table');
+  table.appendChild(el('tr', {}, ['When', 'Admin', 'Action', 'Detail', 'From'].map(h => el('th', {}, [h]))));
+  entries.forEach(e => {
+    table.appendChild(el('tr', { class: e.action === 'login.failed' ? 'failed' : '' }, [
+      el('td', {}, [fmtDateTime(e.createdAt)]),
+      el('td', {}, [e.username]),
+      el('td', {}, [ACTION_LABELS[e.action] || e.action]),
+      el('td', { class: 'mono' }, [e.detail || '']),
+      el('td', { class: 'mono' }, [e.ip || '']),
+    ]));
+  });
+  block.appendChild(el('div', { class: 'scroll' }, [table]));
+}
+
+async function fetchJson(path) {
+  const res = await fetch(BACKEND_URL + path, { headers: adminAuthHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+  if (!res.ok) throw new Error(data.error || 'Request failed (' + res.status + ').');
+  return data;
+}
+
+async function load() {
+  const days = document.getElementById('daysSelect').value;
+  try {
+    const [summary, audit] = await Promise.all([
+      fetchJson('/api/admin/analytics?days=' + encodeURIComponent(days)),
+      fetchJson('/api/admin/audit-log?limit=100'),
+    ]);
+    renderSummary(summary);
+    renderAudit(audit.entries || []);
+    showStatus('ok', 'Loaded.');
+  } catch (e) {
+    showStatus('err', e.message);
+  }
+}
+
+document.getElementById('refreshBtn').addEventListener('click', load);
+document.getElementById('daysSelect').addEventListener('change', load);
+renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+initBackendUrlField();
+</script>
+</body>
+</html>

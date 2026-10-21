@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guided Rate Import — Medical Premium Illustrator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root { --ink: #221a17; --line: #ddd3c6; --bg: #f5efe4; --red: #a6192e; --gold: #b8892b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+  .warning-bar { background: #3a0510; color: #ffd166; font-size: 12.5px; text-align: center; padding: 10px 16px; line-height: 1.5; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #77655e; margin: 0 0 20px; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; margin-bottom: 20px; }
+  .panel-title { font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=password], select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13.5px; font-family: inherit;
+  }
+  .field { margin-bottom: 12px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .row > .field { flex: 1; min-width: 140px; }
+  .checks { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+  .checks label { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+  button { font-family: inherit; cursor: pointer; }
+  button.btn { background: var(--red); color: #fff; border: none; padding: 9px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; }
+  button.btn.ghost { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  button.btn.gold { background: var(--gold); }
+  button.btn:disabled { background: #c9bcae; cursor: not-allowed; }
+  button.small { padding: 5px 10px; font-size: 12px; border-radius: 4px; border: 1px solid var(--line); background: #fff; }
+  table.grid-preview { border-collapse: collapse; font-size: 11.5px; width: 100%; }
+  table.grid-preview th, table.grid-preview td { border: 1px solid var(--line); padding: 3px 6px; text-align: left; white-space: nowrap; }
+  table.grid-preview th { background: var(--bg); position: sticky; top: 0; }
+  .grid-scroll { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 4px; }
+  .benefit-card { border: 1px solid var(--line); border-radius: 5px; padding: 14px 16px; margin-bottom: 12px; }
+  .benefit-head { display: flex; align-items: center; justify-content: space-between; }
+  .benefit-head .title { font-weight: 700; font-size: 14px; }
+  .badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--bg); color: #77655e; }
+  .band-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; }
+  .band-row .field { margin-bottom: 0; }
+  .extract-row { display: flex; gap: 8px; align-items: flex-end; }
+  .extract-row .field { flex: 1; margin-bottom: 0; }
+  .preview-values { font-size: 11.5px; color: #2f6b45; margin-top: 6px; word-break: break-all; }
+  .error-text { font-size: 11.5px; color: #b23b3b; margin-top: 6px; }
+  .status { margin-top: 12px; font-size: 13px; padding: 10px 12px; border-radius: 4px; display: none; white-space: pre-line; }
+  .status.ok { background: #f1f6f4; color: #2f6b45; border: 1px solid #b8d3c8; display: block; }
+  .status.err { background: #fdf3e6; color: #8a5a1c; border: 1px solid #e3b976; display: block; }
+  .hint { font-size: 11px; color: #77655e; margin-top: 2px; }
+  table.result-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+  table.result-table th, table.result-table td { border: 1px solid var(--line); padding: 6px 10px; text-align: right; }
+  table.result-table th:first-child, table.result-table td:first-child { text-align: left; }
+
+  .backend-url-bar { background: #fff; border-bottom: 1px solid var(--line); padding: 10px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .backend-url-bar label { font-size: 12px; font-weight: 600; margin: 0; white-space: nowrap; }
+  .backend-url-bar input { flex: 1; min-width: 240px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; font-family: inherit; }
+  .backend-url-status { font-size: 11.5px; color: #77655e; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="warning-bar">
+  <strong>Internal admin tool — Phase 2 prototype.</strong>
+  Guided, not automatic: nothing here goes live until you review a preview
+  illustration and click Publish. See ROADMAP.md, Phase 2.
+</div>
+
+<div class="backend-url-bar">
+  <label for="backendUrlInput">Backend URL</label>
+  <input type="text" id="backendUrlInput" placeholder="Auto-detected — leave blank unless pointing at a different backend">
+  <span class="backend-url-status" id="backendUrlStatus"></span>
+</div>
+
+<div class="wrap">
+  <h1>Guided Rate Import</h1>
+  <p class="sub">Upload a rate workbook, map its cells to the fields below, check the preview illustration, then publish. JCare / J-Junior / JSenior are not affected by anything here — they stay on the original, individually-validated engine.</p>
+
+  <div class="panel">
+    <div class="panel-title">1. Upload Workbook</div>
+    <div class="field">
+      <label for="fileInput">Excel file (.xlsx)</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </div>
+    <div class="row" id="sheetPickerRow" style="display:none">
+      <div class="field">
+        <label for="sheetSelect">Sheet</label>
+        <select id="sheetSelect"></select>
+      </div>
+    </div>
+    <div class="grid-scroll" id="gridPreview" style="display:none; margin-top:10px;"></div>
+    <p class="hint">The grid above is read-only — it's just there so you can identify which cells to reference below (e.g. "D6:I6"). Row and column headers match Excel's own.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">2. Product Setup</div>
+    <div class="row">
+      <div class="field"><label for="pId">Product ID</label><input type="text" id="pId" placeholder="e.g. ACMEFAMILY"></div>
+      <div class="field"><label for="pName">Product Name</label><input type="text" id="pName" placeholder="e.g. Acme Family Cover"></div>
+    </div>
+    <div class="field">
+      <label>Covered Roles</label>
+      <div class="checks">
+        <label><input type="checkbox" class="roleCheck" value="principal" checked> Principal</label>
+        <label><input type="checkbox" class="roleCheck" value="spouse" checked> Spouse</label>
+        <label><input type="checkbox" class="roleCheck" value="child" checked> Child</label>
+      </div>
+    </div>
+    <div class="row" id="eligibilityRow"></div>
+    <div class="row">
+      <div class="field"><label for="pLevy">Levy Rate (e.g. 0.0045 for 0.45%)</label><input type="text" id="pLevy" value="0.0045"></div>
+      <div class="field"><label for="pStamp">Stamp Duty (Kes)</label><input type="text" id="pStamp" value="40"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">3. Plan Tiers</div>
+    <div id="tiersList"></div>
+    <button class="btn ghost small" id="addTierBtn" type="button">+ Add Tier</button>
+    <div class="hint" style="margin-top:8px">Type each tier's id/label, and either type its limit directly or extract a row of limits from the sheet below.</div>
+    <div class="extract-row" style="margin-top:10px">
+      <div class="field"><label>Extract limits from range (fills tiers in order)</label><input type="text" id="tiersRange" placeholder="e.g. D5:I5"></div>
+      <button class="btn ghost small" id="extractTiersBtn" type="button">Extract</button>
+    </div>
+    <div id="tiersExtractStatus"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">4. Benefits</div>
+    <div id="benefitsList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">5. Save, Preview & Publish</div>
+    <div id="adminAuthPanel" style="margin-bottom:16px"></div>
+    <button class="btn" id="saveDraftBtn" type="button">Build & Save Draft</button>
+    <div class="status" id="draftStatus"></div>
+
+    <div style="margin-top:20px">
+      <h2>Preview Illustration</h2>
+      <p class="hint">Runs the CURRENT DRAFT (not yet published) against a sample scenario, so you can sanity-check the numbers before anyone else sees them.</p>
+      <div class="row">
+        <div class="field"><label for="prevPrincipalAge">Principal Age</label><input type="text" id="prevPrincipalAge" value="35"></div>
+        <div class="field"><label for="prevSpouseAge">Spouse Age (if included)</label><input type="text" id="prevSpouseAge" value="33"></div>
+        <div class="field"><label for="prevNumChildren">Number of Children</label><input type="text" id="prevNumChildren" value="1"></div>
+      </div>
+      <button class="btn ghost" id="previewBtn" type="button">Run Preview</button>
+      <div id="previewResults"></div>
+    </div>
+
+    <div style="margin-top:20px">
+      <h2>Publish</h2>
+      <p class="hint">Makes this draft live — any client using <code>/api/calculate</code> with this product id will get these rates immediately.</p>
+      <button class="btn gold" id="publishBtn" type="button">Publish Draft</button>
+      <div class="status" id="publishStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../frontend/config.js"></script>
+<script src="admin-session.js"></script>
+<script src="rate-import-core.js"></script>
+<script src="range-extract.js"></script>
+<script>
+// ---------------- Backend URL override (persisted, shared across admin tools) ----------------
+// config.js's API_BASE_URL auto-detects same-origin for the normal app, but these admin
+// pages are opened as local files, not served by any backend — so it always falls back to
+// http://localhost:3001 there. This override lets you point either admin tool at any
+// deployed backend without editing code. Stored under one shared key so setting it once
+// in either tool applies to both.
+const BACKEND_URL_STORAGE_KEY = 'mpi_admin_backend_url';
+function getStoredBackendUrl() {
+  try { return localStorage.getItem(BACKEND_URL_STORAGE_KEY) || ''; } catch (e) { return ''; }
+}
+function setStoredBackendUrl(url) {
+  try { if (url) localStorage.setItem(BACKEND_URL_STORAGE_KEY, url); else localStorage.removeItem(BACKEND_URL_STORAGE_KEY); } catch (e) { /* storage unavailable — override still works for this page load */ }
+}
+let BACKEND_URL = getStoredBackendUrl() || API_BASE_URL;
+function updateBackendUrlStatus() {
+  document.getElementById('backendUrlStatus').textContent = 'Using: ' + (BACKEND_URL || '(same origin)');
+}
+function initBackendUrlField(onChangeReload) {
+  const input = document.getElementById('backendUrlInput');
+  input.value = getStoredBackendUrl();
+  input.placeholder = 'Auto-detected: ' + (API_BASE_URL || '(same origin)') + ' — leave blank to use it';
+  updateBackendUrlStatus();
+  input.addEventListener('input', () => {
+    const val = input.value.trim().replace(/\/+$/, '');
+    BACKEND_URL = val || API_BASE_URL;
+    setStoredBackendUrl(val);
+    updateBackendUrlStatus();
+  });
+  input.addEventListener('change', () => { if (onChangeReload) onChangeReload(); });
+}
+
+const state = makeInitialState();
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    if (attrs[k] === null || attrs[k] === undefined) continue;
+    if (k === 'class') e.className = attrs[k];
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), attrs[k]);
+    else e.setAttribute(k, attrs[k]);
+  }
+  (children || []).forEach(c => { if (c !== null && c !== undefined) e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c); });
+  return e;
+}
+
+// ---------------- File upload + grid preview ----------------
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const data = new Uint8Array(evt.target.result);
+    state.workbook = XLSX.read(data, { type: 'array' });
+    state.sheetNames = state.workbook.SheetNames;
+    state.activeSheet = state.sheetNames[0];
+    renderSheetPicker();
+    renderGrid();
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function renderSheetPicker() {
+  const row = document.getElementById('sheetPickerRow');
+  row.style.display = 'flex';
+  const sel = document.getElementById('sheetSelect');
+  sel.innerHTML = '';
+  state.sheetNames.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  sel.value = state.activeSheet;
+  sel.onchange = () => { state.activeSheet = sel.value; renderGrid(); };
+}
+
+function renderGrid() {
+  const container = document.getElementById('gridPreview');
+  container.style.display = 'block';
+  container.innerHTML = '';
+  const sheet = state.workbook.Sheets[state.activeSheet];
+  const range = XLSX.utils.decode_range(sheet['!ref']);
+  const maxRow = Math.min(range.e.r, range.s.r + 60);
+  const maxCol = Math.min(range.e.c, range.s.c + 20);
+  const table = document.createElement('table');
+  table.className = 'grid-preview';
+  const thead = document.createElement('tr');
+  thead.appendChild(document.createElement('th'));
+  for (let c = range.s.c; c <= maxCol; c++) {
+    thead.appendChild(el('th', {}, [XLSX.utils.encode_col(c)]));
+  }
+  table.appendChild(thead);
+  for (let r = range.s.r; r <= maxRow; r++) {
+    const tr = document.createElement('tr');
+    tr.appendChild(el('th', {}, [String(r + 1)]));
+    for (let c = range.s.c; c <= maxCol; c++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      const cell = sheet[addr];
+      tr.appendChild(el('td', {}, [cell ? String(cell.v) : '']));
+    }
+    table.appendChild(tr);
+  }
+  container.appendChild(table);
+}
+
+function extractFromActiveSheet(rangeStr) {
+  const sheet = state.workbook.Sheets[state.activeSheet];
+  return extractRange(sheet, rangeStr, { expectNumeric: true });
+}
+
+// ---------------- Product setup / eligibility ----------------
+function renderEligibility() {
+  const row = document.getElementById('eligibilityRow');
+  row.innerHTML = '';
+  state.product.roles.forEach(role => {
+    const elig = state.product.roleEligibility[role] || { min: 0, max: 100 };
+    const minInput = el('input', { type: 'text' }); minInput.value = elig.min;
+    const maxInput = el('input', { type: 'text' }); maxInput.value = elig.max;
+    minInput.addEventListener('input', () => { state.product.roleEligibility[role].min = Number(minInput.value); });
+    maxInput.addEventListener('input', () => { state.product.roleEligibility[role].max = Number(maxInput.value); });
+    row.appendChild(el('div', { class: 'field' }, [
+      el('label', {}, [role.charAt(0).toUpperCase() + role.slice(1) + ' age range']),
+      el('div', { style: 'display:flex; gap:6px' }, [minInput, maxInput]),
+    ]));
+  });
+  renderBenefits(); // role checkboxes affect which roles benefits can target
+}
+document.querySelectorAll('.roleCheck').forEach(cb => {
+  cb.addEventListener('change', () => {
+    state.product.roles = Array.from(document.querySelectorAll('.roleCheck:checked')).map(c => c.value);
+    renderEligibility();
+  });
+});
+document.getElementById('pId').addEventListener('input', e => state.product.id = e.target.value);
+document.getElementById('pName').addEventListener('input', e => state.product.name = e.target.value);
+document.getElementById('pLevy').addEventListener('input', e => state.product.levyRate = e.target.value);
+document.getElementById('pStamp').addEventListener('input', e => state.product.stampDuty = e.target.value);
+
+// ---------------- Tiers ----------------
+function renderTiers() {
+  const list = document.getElementById('tiersList');
+  list.innerHTML = '';
+  state.tiers.forEach((tier, i) => {
+    const idInput = el('input', { type: 'text', placeholder: 'id e.g. classic' }); idInput.value = tier.id;
+    const labelInput = el('input', { type: 'text', placeholder: 'Label e.g. Classic' }); labelInput.value = tier.label;
+    const limitInput = el('input', { type: 'text', placeholder: 'Limit e.g. 500000' }); limitInput.value = tier.limit || '';
+    idInput.addEventListener('input', () => tier.id = idInput.value);
+    labelInput.addEventListener('input', () => tier.label = labelInput.value);
+    limitInput.addEventListener('input', () => tier.limit = Number(limitInput.value));
+    const removeBtn = el('button', { class: 'small', type: 'button', onclick: () => { state.tiers.splice(i, 1); renderTiers(); } }, ['Remove']);
+    list.appendChild(el('div', { class: 'row', style: 'margin-bottom:8px; align-items:flex-end' }, [
+      el('div', { class: 'field' }, [idInput]),
+      el('div', { class: 'field' }, [labelInput]),
+      el('div', { class: 'field' }, [limitInput]),
+      removeBtn,
+    ]));
+  });
+}
+document.getElementById('addTierBtn').addEventListener('click', () => {
+  state.tiers.push({ id: '', label: '', limit: null });
+  renderTiers();
+});
+document.getElementById('extractTiersBtn').addEventListener('click', () => {
+  const statusEl = document.getElementById('tiersExtractStatus');
+  try {
+    const values = extractFromActiveSheet(document.getElementById('tiersRange').value);
+    values.forEach((v, i) => {
+      if (!state.tiers[i]) state.tiers.push({ id: '', label: '', limit: null });
+      state.tiers[i].limit = v;
+    });
+    renderTiers();
+    statusEl.innerHTML = '';
+    statusEl.appendChild(el('div', { class: 'preview-values' }, ['Extracted: ' + JSON.stringify(values)]));
+  } catch (e) {
+    statusEl.innerHTML = '';
+    statusEl.appendChild(el('div', { class: 'error-text' }, [e.message]));
+  }
+});
+
+// ---------------- Benefits ----------------
+function renderBenefits() {
+  const list = document.getElementById('benefitsList');
+  list.innerHTML = '';
+  COMMON_BENEFITS.forEach(def => {
+    const b = ensureBenefit(state, def.key, def.label);
+    const card = el('div', { class: 'benefit-card' });
+    const includeCheck = el('input', { type: 'checkbox' }); includeCheck.checked = b.included;
+    includeCheck.addEventListener('change', () => { b.included = includeCheck.checked; renderBenefits(); });
+    card.appendChild(el('div', { class: 'benefit-head' }, [
+      el('label', { style: 'display:flex; align-items:center; gap:8px; margin:0' }, [includeCheck, el('span', { class: 'title' }, [def.label])]),
+      def.mandatoryDefault ? el('span', { class: 'badge' }, ['Always included']) : (def.mirrorsOnly ? el('span', { class: 'badge' }, ['Mirrors Dental toggle']) : null),
+    ]));
+
+    if (b.included && !def.mirrorsOnly) {
+      const roleChecks = el('div', { class: 'checks' });
+      state.product.roles.forEach(role => {
+        const cb = el('input', { type: 'checkbox' });
+        cb.checked = b.includeRoles.includes(role);
+        cb.addEventListener('change', () => {
+          if (cb.checked) b.includeRoles.push(role); else b.includeRoles = b.includeRoles.filter(r => r !== role);
+          renderBenefits();
+        });
+        roleChecks.appendChild(el('label', {}, [cb, role]));
+      });
+      card.appendChild(roleChecks);
+
+      const typeSelect = el('select', {});
+      ['flatPerTier', 'ageBandedPerRole'].forEach(t => {
+        const opt = document.createElement('option'); opt.value = t;
+        opt.textContent = t === 'flatPerTier' ? 'Flat per tier (same rate regardless of age)' : 'Age-banded per role';
+        typeSelect.appendChild(opt);
+      });
+      typeSelect.value = b.rateType;
+      typeSelect.addEventListener('change', () => { b.rateType = typeSelect.value; renderBenefits(); });
+      card.appendChild(el('div', { class: 'field' }, [el('label', {}, ['Rate type']), typeSelect]));
+
+      if (b.rateType === 'flatPerTier') {
+        const rangeInput = el('input', { type: 'text', placeholder: 'e.g. D20:I20' }); rangeInput.value = b.flatRange;
+        rangeInput.addEventListener('input', () => b.flatRange = rangeInput.value);
+        const extractBtn = el('button', { class: 'btn ghost small', type: 'button', onclick: () => {
+          try {
+            b.flatExtracted = extractFromActiveSheet(b.flatRange);
+            renderBenefits();
+          } catch (e) { b.flatError = e.message; renderBenefits(); }
+        } }, ['Extract']);
+        card.appendChild(el('div', { class: 'extract-row' }, [el('div', { class: 'field' }, [el('label', {}, ['Range']), rangeInput]), extractBtn]));
+        if (b.flatExtracted) card.appendChild(el('div', { class: 'preview-values' }, ['Extracted: ' + JSON.stringify(b.flatExtracted)]));
+        if (b.flatError) card.appendChild(el('div', { class: 'error-text' }, [b.flatError]));
+      } else {
+        b.includeRoles.forEach(role => {
+          if (!b.perRole[role]) b.perRole[role] = { mode: 'banded', bands: [] };
+          const rSpec = b.perRole[role];
+          const roleBox = el('div', { style: 'border-top:1px dashed var(--line); padding-top:10px; margin-top:10px' });
+          roleBox.appendChild(el('div', { style: 'font-weight:600; font-size:12.5px; margin-bottom:6px' }, [role.charAt(0).toUpperCase() + role.slice(1)]));
+          const modeSelect = el('select', {});
+          ['banded', 'flat'].forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m === 'banded' ? 'Age bands' : 'Flat (no age bands for this role)'; modeSelect.appendChild(o); });
+          modeSelect.value = rSpec.mode;
+          modeSelect.addEventListener('change', () => { rSpec.mode = modeSelect.value; renderBenefits(); });
+          roleBox.appendChild(el('div', { class: 'field' }, [modeSelect]));
+
+          if (rSpec.mode === 'flat') {
+            const rInput = el('input', { type: 'text', placeholder: 'e.g. D31:I31' }); rInput.value = rSpec.flatRange || '';
+            rInput.addEventListener('input', () => rSpec.flatRange = rInput.value);
+            const eBtn = el('button', { class: 'btn ghost small', type: 'button', onclick: () => {
+              try { rSpec.flatExtracted = extractFromActiveSheet(rSpec.flatRange); renderBenefits(); }
+              catch (e) { rSpec.error = e.message; renderBenefits(); }
+            } }, ['Extract']);
+            roleBox.appendChild(el('div', { class: 'extract-row' }, [el('div', { class: 'field' }, [rInput]), eBtn]));
+            if (rSpec.flatExtracted) roleBox.appendChild(el('div', { class: 'preview-values' }, ['Extracted: ' + JSON.stringify(rSpec.flatExtracted)]));
+          } else {
+            (rSpec.bands || []).forEach((band, bi) => {
+              const labelInput = el('input', { type: 'text', placeholder: 'e.g. 18-30' }); labelInput.value = band.label || '';
+              const minInput = el('input', { type: 'text', placeholder: 'min' }); minInput.value = band.min ?? '';
+              const maxInput = el('input', { type: 'text', placeholder: 'max' }); maxInput.value = band.max ?? '';
+              const rangeInput = el('input', { type: 'text', placeholder: 'e.g. D8:I8' }); rangeInput.value = band.range || '';
+              labelInput.addEventListener('input', () => band.label = labelInput.value);
+              minInput.addEventListener('input', () => band.min = Number(minInput.value));
+              maxInput.addEventListener('input', () => band.max = Number(maxInput.value));
+              rangeInput.addEventListener('input', () => band.range = rangeInput.value);
+              const extractBandBtn = el('button', { class: 'small', type: 'button', onclick: () => {
+                try { band.extracted = extractFromActiveSheet(band.range); renderBenefits(); }
+                catch (e) { band.error = e.message; renderBenefits(); }
+              } }, ['Extract']);
+              const removeBandBtn = el('button', { class: 'small', type: 'button', onclick: () => { rSpec.bands.splice(bi, 1); renderBenefits(); } }, ['✕']);
+              roleBox.appendChild(el('div', { class: 'band-row' }, [
+                el('div', { class: 'field', style: 'max-width:90px' }, [labelInput]),
+                el('div', { class: 'field', style: 'max-width:60px' }, [minInput]),
+                el('div', { class: 'field', style: 'max-width:60px' }, [maxInput]),
+                el('div', { class: 'field' }, [rangeInput]),
+                extractBandBtn, removeBandBtn,
+              ]));
+              if (band.extracted) roleBox.appendChild(el('div', { class: 'preview-values' }, ['Band "' + band.label + '": ' + JSON.stringify(band.extracted)]));
+              if (band.error) roleBox.appendChild(el('div', { class: 'error-text' }, [band.error]));
+            });
+            roleBox.appendChild(el('button', { class: 'btn ghost small', type: 'button', onclick: () => { rSpec.bands.push({ label: '', min: null, max: null, range: '' }); renderBenefits(); } }, ['+ Add Age Band']));
+          }
+          card.appendChild(roleBox);
+        });
+      }
+    }
+    list.appendChild(card);
+  });
+}
+
+// ---------------- Save / Preview / Publish ----------------
+function showStatus(id, kind, msg) {
+  const el = document.getElementById(id);
+  el.className = 'status ' + kind;
+  el.textContent = msg;
+}
+
+document.getElementById('saveDraftBtn').addEventListener('click', async () => {
+  const { schema, errors } = buildSchema(state);
+  if (errors.length) { showStatus('draftStatus', 'err', errors.join('\n')); return; }
+  try {
+    const res = await fetch(BACKEND_URL + '/api/products/' + encodeURIComponent(schema.id) + '/draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+      body: JSON.stringify(schema),
+    });
+    const data = await res.json();
+    if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+    if (!res.ok) throw new Error(data.error || 'Save failed.');
+    showStatus('draftStatus', 'ok', 'Draft saved. Run a preview below before publishing.');
+  } catch (e) {
+    showStatus('draftStatus', 'err', e.message);
+  }
+});
+
+document.getElementById('previewBtn').addEventListener('click', async () => {
+  const id = state.product.id.trim();
+  const input = {
+    principalAge: Number(document.getElementById('prevPrincipalAge').value) || 0,
+    hasSpouse: state.product.roles.includes('spouse'),
+    spouseAge: Number(document.getElementById('prevSpouseAge').value) || 0,
+    numChildren: Number(document.getElementById('prevNumChildren').value) || 0,
+    outpatient: true, dental: true, maternity: true, lastExpense: true, personalAccident: true, covid: false, covidLimit: null,
+  };
+  const resultsDiv = document.getElementById('previewResults');
+  try {
+    const res = await fetch(BACKEND_URL + '/api/products/' + encodeURIComponent(id) + '/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+      body: JSON.stringify({ input }),
+    });
+    const data = await res.json();
+    if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+    if (!res.ok) throw new Error(data.error || 'Preview failed.');
+    resultsDiv.innerHTML = '';
+    const table = el('table', { class: 'result-table' });
+    table.appendChild(el('tr', {}, [el('th', {}, ['Tier']), el('th', {}, ['Basic']), el('th', {}, ['Levy']), el('th', {}, ['Stamp']), el('th', {}, ['Total'])]));
+    data.results.forEach(r => {
+      table.appendChild(el('tr', {}, [
+        el('td', {}, [r.tier.label]), el('td', {}, [r.basicPremium.toFixed(2)]),
+        el('td', {}, [r.levy.toFixed(2)]), el('td', {}, [r.stampDuty.toFixed(2)]), el('td', {}, [r.totalPremium.toFixed(2)]),
+      ]));
+    });
+    resultsDiv.appendChild(table);
+  } catch (e) {
+    resultsDiv.innerHTML = '';
+    resultsDiv.appendChild(el('div', { class: 'error-text' }, [e.message]));
+  }
+});
+
+document.getElementById('publishBtn').addEventListener('click', async () => {
+  const id = state.product.id.trim();
+  try {
+    const res = await fetch(BACKEND_URL + '/api/products/' + encodeURIComponent(id) + '/publish', {
+      method: 'POST',
+      headers: { ...adminAuthHeaders() },
+    });
+    const data = await res.json();
+    if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+    if (!res.ok) throw new Error(data.error || 'Publish failed.');
+    showStatus('publishStatus', 'ok', 'Published. /api/calculate now serves this product live.');
+  } catch (e) {
+    showStatus('publishStatus', 'err', e.message);
+  }
+});
+
+renderEligibility();
+renderTiers();
+renderBenefits();
+renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+initBackendUrlField(); // nothing to auto-reload here — applies to the next Save/Preview/Publish action
+</script>
+</body>
+</html>

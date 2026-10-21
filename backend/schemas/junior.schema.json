@@ -1,0 +1,149 @@
+{
+  "id": "JUNIOR",
+  "name": "J-Junior",
+  "roles": [
+    "child"
+  ],
+  "roleEligibility": {
+    "child": {
+      "min": 0,
+      "max": 64
+    }
+  },
+  "tiers": [
+    {
+      "id": "classic",
+      "label": "Classic",
+      "limit": 500000
+    },
+    {
+      "id": "premier",
+      "label": "Premier",
+      "limit": 1000000
+    },
+    {
+      "id": "advanced",
+      "label": "Advanced",
+      "limit": 2000000
+    },
+    {
+      "id": "executive",
+      "label": "Executive",
+      "limit": 3000000
+    },
+    {
+      "id": "royal",
+      "label": "Royal",
+      "limit": 5000000
+    },
+    {
+      "id": "prestige",
+      "label": "Prestige",
+      "limit": 10000000
+    }
+  ],
+  "levyRate": 0.0045,
+  "stampDuty": 40,
+  "benefits": {
+    "inpatient": {
+      "label": "Inpatient",
+      "mandatory": true,
+      "includeRoles": [
+        "child"
+      ],
+      "rate": {
+        "type": "flatPerTier",
+        "values": [
+          21307.0424,
+          25621.4826,
+          30214.560599999997,
+          36928.2375,
+          48028.25781496043,
+          55033.43375210955
+        ]
+      }
+    },
+    "outpatient": {
+      "label": "Outpatient",
+      "toggle": true,
+      "includeRoles": [
+        "child"
+      ],
+      "rate": {
+        "type": "flatPerTier",
+        "values": [
+          26555.292749999997,
+          26555.292749999997,
+          31981.814316438977,
+          40353.57675009895,
+          50174.84418093533,
+          55167.76724227771
+        ]
+      }
+    },
+    "dental": {
+      "label": "Dental",
+      "toggle": true,
+      "includeRoles": [
+        "child"
+      ],
+      "rate": {
+        "type": "flatPerTier",
+        "values": [
+          2696.3475000000003,
+          3516.975,
+          7151.182500000001,
+          10668.1575,
+          17819.34,
+          21482.5765
+        ]
+      }
+    },
+    "optical": {
+      "label": "Optical",
+      "mirrorsToggleOf": "dental",
+      "includeRoles": [
+        "child"
+      ],
+      "rate": {
+        "type": "flatPerTier",
+        "values": [
+          2696.3475000000003,
+          3516.975,
+          7151.182500000001,
+          10668.1575,
+          17819.34,
+          21482.5765
+        ]
+      }
+    },
+    "covid": {
+      "label": "Covid-19",
+      "toggle": true,
+      "includeRoles": [
+        "child"
+      ],
+      "rate": {
+        "type": "optionsFlat",
+        "options": [
+          {
+            "limit": 500000,
+            "premium": 6140.749999999999
+          },
+          {
+            "limit": 1000000,
+            "premium": 9490.25
+          },
+          {
+            "limit": 1500000,
+            "premium": 10885.874999999998
+          },
+          {
+            "limit": 2000000,
+            "premium": 12839.749999999998
+          }
+        ]
+      }
+    }
+  }
+}

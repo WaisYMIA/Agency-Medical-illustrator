@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin tools — Medical Premium Illustrator</title>
+<style>
+  :root { --ink: #221a17; --line: #ddd3c6; --bg: #f5efe4; --red: #a6192e; --gold: #b8892b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+  .warning-bar { background: #3a0510; color: #ffd166; font-size: 12.5px; text-align: center; padding: 10px 16px; line-height: 1.5; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  .sub { font-size: 14px; color: #77655e; margin: 0 0 26px; line-height: 1.5; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 680px) { .cards { grid-template-columns: 1fr; } }
+  a.card { display: block; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; text-decoration: none; color: inherit; }
+  a.card:hover { border-color: var(--red); }
+  a.card .name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  a.card .desc { font-size: 13px; color: #77655e; line-height: 1.5; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 20px 24px; }
+  .panel h2 { font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin: 0 0 12px; }
+  ol { margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.7; }
+  code { background: var(--bg); padding: 1px 6px; border-radius: 3px; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="warning-bar">
+  <strong>Internal admin tools.</strong> Open these on your own computer — they are not part of the public app. Do not put this folder on a public website.
+</div>
+<div class="wrap">
+  <h1>Admin tools</h1>
+  <p class="sub">Everything for running the Medical Premium Illustrator. Each tool asks you to sign in, and signing in on one carries across to the rest.</p>
+
+  <div class="cards">
+    <a class="card" href="agents.html">
+      <div class="name">Agents</div>
+      <div class="desc">See every verified agent and the Terms they accepted. Revoke someone's access — it takes effect on their very next request.</div>
+    </a>
+    <a class="card" href="analytics.html">
+      <div class="name">Usage &amp; Activity</div>
+      <div class="desc">How many illustrations by product, plan and agent — and a record of which admin changed what.</div>
+    </a>
+    <a class="card" href="branding.html">
+      <div class="name">Branding</div>
+      <div class="desc">Company name, product name, colours and contact details, with a live preview.</div>
+    </a>
+    <a class="card" href="rate-import.html">
+      <div class="name">Rate Import</div>
+      <div class="desc">Add a new product from an Excel rate workbook — check a preview, then publish.</div>
+    </a>
+  </div>
+
+  <div class="panel">
+    <h2>First time? Three things to know</h2>
+    <ol>
+      <li><strong>The backend must be running.</strong> Locally, that's <code>npm start</code> inside the <code>backend</code> folder. Each tool has a <em>Backend URL</em> bar at the top — leave it blank for a local backend, or paste your live address (e.g. <code>https://your-app.onrender.com</code>) once.</li>
+      <li><strong>Create your admin account.</strong> Set <code>ADMIN_BOOTSTRAP_USERNAME</code> and <code>ADMIN_BOOTSTRAP_PASSWORD</code> on the backend and restart it once; your account is created automatically. Then sign in with those details. Until you do, the legacy <code>ADMIN_SECRET</code> still works.</li>
+      <li><strong>Sign out on shared computers.</strong> Staying signed in is remembered in this browser.</li>
+    </ol>
+  </div>
+</div>
+</body>
+</html>

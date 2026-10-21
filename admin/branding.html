@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branding Admin — Medical Premium Illustrator</title>
+<style>
+  :root { --ink: #221a17; --line: #ddd3c6; --bg: #f5efe4; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); }
+  .warning-bar { background: #3a0510; color: #ffd166; font-size: 12.5px; text-align: center; padding: 10px 16px; line-height: 1.5; }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 100vh; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .editor { padding: 32px; background: #fff; overflow-y: auto; }
+  .preview-pane { padding: 32px; background: var(--bg); }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #77655e; margin: 0 0 24px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
+  input[type=text], input[type=email], input[type=password] {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 4px; font-size: 14px; font-family: inherit;
+  }
+  input[type=color] { width: 48px; height: 34px; border: 1px solid var(--line); border-radius: 4px; padding: 2px; cursor: pointer; }
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  .color-row input[type=text] { max-width: 110px; }
+  .section-title { font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #b8892b; margin: 26px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .section-title:first-of-type { margin-top: 0; }
+  button.save { background: #a6192e; color: #fff; border: none; padding: 12px 22px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  button.save:disabled { background: #c9bcae; cursor: not-allowed; }
+  .status { margin-top: 12px; font-size: 13px; padding: 10px 12px; border-radius: 4px; display: none; }
+  .status.ok { background: #f1f6f4; color: #2f6b45; border: 1px solid #b8d3c8; display: block; }
+  .status.err { background: #fdf3e6; color: #8a5a1c; border: 1px solid #e3b976; display: block; }
+  .hint { font-size: 11.5px; color: #77655e; margin-top: 4px; }
+
+  /* --- live preview mock, mirrors the real app's masthead --- */
+  .preview-masthead { border-radius: 6px; padding: 20px 24px; color: #fbf8f3; position: relative; overflow: hidden; }
+  .preview-brand { display: flex; align-items: center; gap: 14px; }
+  .preview-crest { width: 40px; height: 40px; border: 1.5px solid var(--pv-accent, #b8892b); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; color: var(--pv-accent, #b8892b); flex-shrink: 0; }
+  .preview-name { font-size: 20px; font-weight: 700; margin: 0; font-family: Georgia, serif; }
+  .preview-tagline { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.75; margin: 2px 0 0; }
+  .preview-card { background: #fff; border: 1px solid var(--line); border-radius: 6px; margin-top: 20px; padding: 20px; }
+  .preview-total-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #77655e; }
+  .preview-total-value { font-size: 26px; font-weight: 700; font-family: Georgia, serif; margin-top: 4px; }
+  .preview-btn { display: inline-block; margin-top: 14px; padding: 10px 20px; border-radius: 4px; color: #fff; font-size: 13.5px; font-weight: 600; }
+  .preview-footer { margin-top: 20px; font-size: 11px; color: #77655e; }
+
+  .backend-url-bar { background: #fff; border-bottom: 1px solid var(--line); padding: 10px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .backend-url-bar label { font-size: 12px; font-weight: 600; margin: 0; white-space: nowrap; }
+  .backend-url-bar input { flex: 1; min-width: 240px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; font-family: inherit; }
+  .backend-url-status { font-size: 11.5px; color: #77655e; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="warning-bar">
+  <strong>Internal admin tool — Phase 1 prototype.</strong>
+  Sign in with your admin account (or the legacy shared secret). Do not
+  expose this page publicly. See ROADMAP.md, Phase 1 / Phase 4.
+</div>
+
+<div class="backend-url-bar">
+  <label for="backendUrlInput">Backend URL</label>
+  <input type="text" id="backendUrlInput" placeholder="Auto-detected — leave blank unless pointing at a different backend">
+  <span class="backend-url-status" id="backendUrlStatus"></span>
+</div>
+
+<div class="layout">
+  <div class="editor">
+    <h1>Branding</h1>
+    <p class="sub">Changes apply the moment you save — every agent using the illustrator will see the new branding on their next page load, no code changes needed.</p>
+
+    <div class="section-title">Identity</div>
+    <div class="field">
+      <label for="companyName">Company Name</label>
+      <input type="text" id="companyName" placeholder="e.g. Acme Insurance Ltd">
+    </div>
+    <div class="field">
+      <label for="productName">Product Name</label>
+      <input type="text" id="productName" placeholder="e.g. Acme Cover Illustrator">
+    </div>
+    <div class="field">
+      <label for="tagline">Tagline</label>
+      <input type="text" id="tagline" placeholder="e.g. Fast, Accurate Quotes">
+    </div>
+    <div class="field">
+      <label for="logoInitial">Logo Mark (1–3 characters, shown in the crest circle)</label>
+      <input type="text" id="logoInitial" maxlength="3" placeholder="e.g. A">
+    </div>
+
+    <div class="section-title">Brand Colors</div>
+    <div class="field">
+      <label for="colorPrimary">Primary (buttons, header)</label>
+      <div class="color-row">
+        <input type="color" id="colorPrimaryPicker">
+        <input type="text" id="colorPrimary" placeholder="#a6192e">
+      </div>
+    </div>
+    <div class="field">
+      <label for="colorPrimaryDark">Primary Dark (header gradient, deep shade)</label>
+      <div class="color-row">
+        <input type="color" id="colorPrimaryDarkPicker">
+        <input type="text" id="colorPrimaryDark" placeholder="#3a0510">
+      </div>
+    </div>
+    <div class="field">
+      <label for="colorAccent">Accent (totals, highlights)</label>
+      <div class="color-row">
+        <input type="color" id="colorAccentPicker">
+        <input type="text" id="colorAccent" placeholder="#b8892b">
+      </div>
+    </div>
+
+    <div class="section-title">Contact Details</div>
+    <div class="field">
+      <label for="contactPhone">Phone</label>
+      <input type="text" id="contactPhone" placeholder="e.g. 0798511366">
+    </div>
+    <div class="field">
+      <label for="contactEmail">Email</label>
+      <input type="email" id="contactEmail" placeholder="e.g. support@company.co.ke">
+    </div>
+
+    <div class="section-title">Sign in</div>
+    <div id="adminAuthPanel" style="margin-bottom:16px"></div>
+
+    <button class="save" id="saveBtn">Save & Apply</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="preview-pane">
+    <p class="sub" style="margin-top:0">Live preview — updates as you type, before you save.</p>
+    <div class="preview-masthead" id="pvMasthead">
+      <div class="preview-brand">
+        <div class="preview-crest" id="pvCrest">M</div>
+        <div>
+          <p class="preview-name" id="pvName">Medical Premium Illustrator</p>
+          <p class="preview-tagline" id="pvTagline">Instant Multi-Plan Quotations</p>
+        </div>
+      </div>
+    </div>
+    <div class="preview-card">
+      <div class="preview-total-label">Proposed Initial Premium</div>
+      <div class="preview-total-value" id="pvTotal">Kes 48,127</div>
+      <div><span class="preview-btn" id="pvButton">Generate Illustration</span></div>
+    </div>
+    <div class="preview-footer" id="pvFooter">&copy; 2026 Walter Jungah &nbsp;·&nbsp; Tel: 0798511366 &nbsp;·&nbsp; walterjungah9@outlook.com</div>
+  </div>
+</div>
+
+<script src="../frontend/config.js"></script>
+<script src="admin-session.js"></script>
+<script>
+  // ---------------- Backend URL override (persisted, shared across admin tools) ----------------
+  // config.js's API_BASE_URL auto-detects same-origin for the normal app, but these admin
+  // pages are opened as local files, not served by any backend — so it always falls back to
+  // http://localhost:3001 there. This override lets you point either admin tool at any
+  // deployed backend without editing code. Stored under one shared key so setting it once
+  // in either tool applies to both.
+  const BACKEND_URL_STORAGE_KEY = 'mpi_admin_backend_url';
+  function getStoredBackendUrl() {
+    try { return localStorage.getItem(BACKEND_URL_STORAGE_KEY) || ''; } catch (e) { return ''; }
+  }
+  function setStoredBackendUrl(url) {
+    try { if (url) localStorage.setItem(BACKEND_URL_STORAGE_KEY, url); else localStorage.removeItem(BACKEND_URL_STORAGE_KEY); } catch (e) { /* storage unavailable — override still works for this page load */ }
+  }
+  let BACKEND_URL = getStoredBackendUrl() || API_BASE_URL;
+  function updateBackendUrlStatus() {
+    document.getElementById('backendUrlStatus').textContent = 'Using: ' + (BACKEND_URL || '(same origin)');
+  }
+  function initBackendUrlField(onChangeReload) {
+    const input = document.getElementById('backendUrlInput');
+    input.value = getStoredBackendUrl();
+    input.placeholder = 'Auto-detected: ' + (API_BASE_URL || '(same origin)') + ' — leave blank to use it';
+    updateBackendUrlStatus();
+    input.addEventListener('input', () => {
+      const val = input.value.trim().replace(/\/+$/, '');
+      BACKEND_URL = val || API_BASE_URL;
+      setStoredBackendUrl(val);
+      updateBackendUrlStatus();
+    });
+    input.addEventListener('change', () => { if (onChangeReload) onChangeReload(); });
+  }
+
+  const fields = ['companyName','productName','tagline','logoInitial','contactPhone','contactEmail'];
+  const colorFields = [
+    { text: 'colorPrimary', picker: 'colorPrimaryPicker', key: 'primary' },
+    { text: 'colorPrimaryDark', picker: 'colorPrimaryDarkPicker', key: 'primaryDark' },
+    { text: 'colorAccent', picker: 'colorAccentPicker', key: 'accent' },
+  ];
+
+  function updatePreview() {
+    const companyName = document.getElementById('companyName').value || 'Walter Jungah';
+    const productName = document.getElementById('productName').value || 'Medical Premium Illustrator';
+    const tagline = document.getElementById('tagline').value || 'Instant Multi-Plan Quotations';
+    const logoInitial = document.getElementById('logoInitial').value || 'M';
+    const phone = document.getElementById('contactPhone').value || '0798511366';
+    const email = document.getElementById('contactEmail').value || 'walterjungah9@outlook.com';
+    const primary = document.getElementById('colorPrimary').value || '#a6192e';
+    const primaryDark = document.getElementById('colorPrimaryDark').value || '#3a0510';
+    const accent = document.getElementById('colorAccent').value || '#b8892b';
+
+    document.getElementById('pvName').textContent = productName;
+    document.getElementById('pvTagline').textContent = tagline;
+    document.getElementById('pvCrest').textContent = logoInitial;
+    document.getElementById('pvFooter').innerHTML = '&copy; 2026 ' + companyName + ' &nbsp;&middot;&nbsp; Tel: ' + phone + ' &nbsp;&middot;&nbsp; ' + email;
+    document.getElementById('pvMasthead').style.background = 'linear-gradient(135deg, ' + primaryDark + ', ' + primary + ' 85%)';
+    document.getElementById('pvCrest').style.borderColor = accent;
+    document.getElementById('pvCrest').style.color = accent;
+    document.getElementById('pvTotal').style.color = primaryDark;
+    document.getElementById('pvButton').style.background = primary;
+
+    colorFields.forEach(cf => { document.getElementById(cf.picker).value = document.getElementById(cf.text).value || document.getElementById(cf.picker).value; });
+  }
+
+  fields.forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
+  colorFields.forEach(cf => {
+    document.getElementById(cf.text).addEventListener('input', updatePreview);
+    document.getElementById(cf.picker).addEventListener('input', () => {
+      document.getElementById(cf.text).value = document.getElementById(cf.picker).value;
+      updatePreview();
+    });
+  });
+
+  async function loadCurrentBranding() {
+    try {
+      const res = await fetch(BACKEND_URL + '/api/branding');
+      const data = await res.json();
+      const b = data.branding || {};
+      document.getElementById('companyName').value = b.companyName || '';
+      document.getElementById('productName').value = b.productName || '';
+      document.getElementById('tagline').value = b.tagline || '';
+      document.getElementById('logoInitial').value = b.logoInitial || '';
+      document.getElementById('contactPhone').value = b.contactPhone || '';
+      document.getElementById('contactEmail').value = b.contactEmail || '';
+      if (b.colors) {
+        document.getElementById('colorPrimary').value = b.colors.primary || '';
+        document.getElementById('colorPrimaryDark').value = b.colors.primaryDark || '';
+        document.getElementById('colorAccent').value = b.colors.accent || '';
+      }
+      updatePreview();
+    } catch (e) {
+      showStatus('err', 'Could not load current branding from the backend. Is it running? (' + e.message + ')');
+    }
+  }
+
+  function showStatus(kind, msg) {
+    const el = document.getElementById('status');
+    el.className = 'status ' + kind;
+    el.textContent = msg;
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    const payload = {
+      companyName: document.getElementById('companyName').value,
+      productName: document.getElementById('productName').value,
+      tagline: document.getElementById('tagline').value,
+      logoInitial: document.getElementById('logoInitial').value,
+      contactPhone: document.getElementById('contactPhone').value,
+      contactEmail: document.getElementById('contactEmail').value,
+      colors: {
+        primary: document.getElementById('colorPrimary').value,
+        primaryDark: document.getElementById('colorPrimaryDark').value,
+        accent: document.getElementById('colorAccent').value,
+      },
+    };
+    try {
+      const res = await fetch(BACKEND_URL + '/api/branding', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...adminAuthHeaders() },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (handleAdminAuthFailure(res)) renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+      if (!res.ok) throw new Error(data.error || 'Save failed.');
+      showStatus('ok', 'Saved. Agents will see this branding the next time they load the app.');
+    } catch (e) {
+      showStatus('err', e.message);
+    }
+    btn.disabled = false;
+    btn.textContent = 'Save & Apply';
+  });
+
+  renderAdminAuthPanel(document.getElementById('adminAuthPanel'), () => BACKEND_URL);
+  initBackendUrlField(() => loadCurrentBranding());
+  loadCurrentBranding();
+</script>
+</body>
+</html>

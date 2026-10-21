@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Premium Illustrator</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <div id="masthead-slot"></div>
+  <main>
+    <div id="app-root"></div>
+    <div class="copyright-footer">
+      <div class="copyright-line"><span id="copyright-line-text">&copy; <span id="copyright-year"></span> Walter Jungah &nbsp;&middot;&nbsp; All rights reserved</span></div>
+      <div class="contact-line">
+        <span id="footer-phone">Tel: 0798511366</span>
+        <span class="sep">|</span>
+        <span id="footer-email">walterjungah9@outlook.com</span>
+        <span class="sep">|</span>
+        <button type="button" id="footer-terms-link" style="color:inherit; background:none; border:none; padding:0; font:inherit; text-decoration:underline; cursor:pointer;">Terms of Use</button>
+      </div>
+    </div>
+  </main>
+  <footer class="app-footer no-print">Medical Premium Illustrator &mdash; the interface runs in your browser; premium calculations are performed by a private backend server.</footer>
+</div>
+
+<script src="config.js"></script>
+<script src="meta.js"></script>
+<script src="terms-content.js"></script>
+<script src="app.js"></script>
+<script>
+  document.getElementById('copyright-year').textContent = new Date().getFullYear();
+  document.getElementById('footer-terms-link').addEventListener('click', () => openTermsModal());
+</script>
+</body>
+</html>
